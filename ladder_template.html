@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🪜 랜덤 사다리 게임</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #0c0c0c, #1a1a1a, #2d2d30);
+            color: #e0e0e0; 
+            min-height: 100vh;
+            padding: 10px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 30px; position: relative; }
+        .header h1 { font-size: clamp(2em, 8vw, 3em); margin-bottom: 10px; color: #9b59b6; }
+        .back-btn {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .header { margin-bottom: 20px; }
+            .input-group { gap: 8px; max-width: 100%; margin: 0 0 20px 0; }
+            .input-group input { font-size: 14px; padding: 10px; }
+            .btn { padding: 10px 15px; font-size: 14px; white-space: nowrap; }
+            .players-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        }
+        @media (max-width: 360px) {
+            .players-grid { grid-template-columns: 1fr; gap: 8px; }
+            .player-card { padding: 10px; gap: 8px; }
+            .preview-ladder { height: 150px; }
+            .preview-player { width: 25px; height: 25px; font-size: 10px; }
+            .preview-result { font-size: 8px; padding: 2px 4px; }
+            .result-area { 
+                padding: 8px 0; 
+                gap: 0; 
+                flex-wrap: nowrap;
+                justify-content: space-evenly;
+                align-items: center;
+                width: 100%;
+            }
+            .result-box { 
+                font-size: 8px; 
+                padding: 4px 2px; 
+                min-width: 0;
+                width: calc(100% / var(--total-players));
+                max-width: calc(100% / var(--total-players));
+                display: flex; 
+                align-items: center; 
+                justify-content: center;
+                word-break: keep-all;
+                overflow: hidden;
+                text-align: center;
+                flex-shrink: 1;
+                flex-grow: 0;
+            }
+            .container { padding: 8px; }
+            .setup-panel { padding: 15px; }
+            .game-area { padding: 10px; min-height: 95vh; }
+            .ladder-container { height: 50vh; margin: 8px 0; }
+            .header h1 { font-size: 1.8em; }
+            .progress-bar { margin: 8px 0; }
+            .controls { gap: 8px; flex-wrap: wrap; }
+            .player-marker { width: 25px; height: 25px; font-size: 12px; }
+            .player-name-tag { font-size: 7px; top: -18px; }
+            .obstacle { width: 20px; height: 20px; font-size: 12px; }
+        }
+        @media (max-width: 480px) {
+            .input-group { gap: 5px; flex-direction: column; }
+            .input-group input { font-size: 13px; padding: 8px; }
+            .btn { padding: 8px 12px; font-size: 13px; width: 100%; }
+            .preview-ladder { height: 120px; }
+            .preview-player { width: 20px; height: 20px; font-size: 8px; }
+            .result-area { padding: 4px 0; gap: 0; }
+            .result-box { font-size: 6px; padding: 2px 1px; min-width: 0; width: calc(100% / var(--total-players)); line-height: 1.2; flex-shrink: 1; }
+            .ladder-container { height: 45vh; }
+            .game-area { padding: 5px; }
+            .header h1 { font-size: 1.4em; }
+            .player-marker { width: 20px; height: 20px; font-size: 10px; }
+            .obstacle { width: 18px; height: 18px; font-size: 10px; }
+            .setup-panel { padding: 10px; }
+        }
+        
+        .setup-panel {
+            background: rgba(0,0,0,0.4);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 30px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            max-width: 500px;
+            margin: 0 auto 20px auto;
+            flex-wrap: nowrap;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #9b59b6;
+            border-radius: 10px;
+            background: rgba(30,30,30,0.9);
+            font-size: 16px;
+            color: #e0e0e0;
+            min-width: 0;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary { background: #9b59b6; color: white; }
+        .btn-success { background: #2ecc71; color: #1a1a2e; }
+        .btn-danger { background: #e74c3c; color: white; }
+        
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+            max-width: 1000px;
+        }
+        @media (max-width: 900px) {
+            .players-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .players-grid { grid-template-columns: 1fr; }
+        }
+        .player-card {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .player-color {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.9);
+            flex-shrink: 0;
+        }
+        .player-card input {
+            flex: 1;
+            background: rgba(20,20,20,0.8);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 8px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        .remove-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e74c3c;
+            border-radius: 50%;
+            background: #e74c3c;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .preview-area {
+            margin: 30px 0;
+            background: rgba(0,0,0,0.2);
+            border-radius: 15px;
+            padding: 20px;
+        }
+        .preview-ladder {
+            position: relative;
+            height: 200px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .preview-lane {
+            position: absolute;
+            width: 3px;
+            height: 100%;
+            background: linear-gradient(180deg, #2c3e50, #34495e);
+        }
+        .preview-player {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+            color: #1a1a2e;
+            border: 3px solid rgba(255,255,255,0.9);
+            top: 10px;
+        }
+        .preview-result {
+            position: absolute;
+            bottom: 10px;
+            padding: 4px 6px;
+            border-radius: 6px;
+            font-size: 10px;
+            font-weight: bold;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+        .preview-winner { background: #2ecc71; color: #1a1a2e; }
+        .preview-pass { background: #95a5a6; color: white; }
+        .controls {
+            text-align: center;
+            margin: 20px auto 0 auto;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .game-area {
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            padding: 20px;
+            min-height: 85vh;
+            display: none;
+            max-width: 100vw;
+            margin: 0 auto;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        .ladder-container {
+            position: relative;
+            width: 100%;
+            height: 70vh;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .lane {
+            position: absolute;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, #2c3e50, #34495e);
+        }
+        .obstacle {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            border: 2px solid rgba(255,255,255,0.8);
+            z-index: 50;
+        }
+        .obstacle-spinner { background: linear-gradient(45deg, #ff6b35, #f7931e); }
+        .obstacle-rocket { background: linear-gradient(45deg, #dc143c, #b22222); }
+        .obstacle-lightning { background: linear-gradient(45deg, #ffff00, #ffd700); }
+        .obstacle-tornado { background: linear-gradient(45deg, #708090, #696969); }
+        .obstacle-freeze { background: linear-gradient(45deg, #00bfff, #1e90ff); }
+        .player-marker {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a1a2e;
+            border: 2px solid rgba(255,255,255,0.9);
+            transition: all 0.3s ease;
+            z-index: 100;
+        }
+        .effect-spinner {
+            animation: spin 1s linear infinite;
+            border-color: #f39c12 !important;
+            box-shadow: 0 0 15px rgba(243, 156, 18, 0.6) !important;
+        }
+        .effect-rocket {
+            transform: scale(1.2) !important;
+            border-color: #e74c3c !important;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.6) !important;
+        }
+        .effect-lightning {
+            border-color: #f1c40f !important;
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.8) !important;
+            animation: pulse 0.5s ease-in-out infinite alternate;
+        }
+        .effect-tornado {
+            animation: wobble 0.8s ease-in-out infinite;
+            border-color: #95a5a6 !important;
+            box-shadow: 0 0 15px rgba(149, 165, 166, 0.6) !important;
+        }
+        .effect-freeze {
+            transform: scale(0.9) !important;
+            border-color: #3498db !important;
+            box-shadow: 0 0 15px rgba(52, 152, 219, 0.6) !important;
+            animation: freeze 2s ease-in-out infinite;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        @keyframes pulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.1); }
+        }
+        @keyframes wobble {
+            0%, 100% { transform: rotate(0deg); }
+            25% { transform: rotate(-3deg); }
+            75% { transform: rotate(3deg); }
+        }
+        @keyframes freeze {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        .player-name-tag {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            padding: 3px 6px;
+            border-radius: 6px;
+            font-size: 10px;
+            white-space: nowrap;
+            color: #e0e0e0;
+        }
+        .result-area {
+            display: flex;
+            justify-content: space-evenly;
+            align-items: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            flex-wrap: nowrap;
+            gap: 0;
+            width: 100%;
+        }
+        .result-box {
+            flex: 1;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            font-weight: bold;
+            font-size: 14px;
+            min-width: 60px;
+            flex-shrink: 0;
+        }
+        .result-winner { background: linear-gradient(135deg, #2ecc71, #27ae60); }
+        .result-pass { background: linear-gradient(135deg, #95a5a6, #7f8c8d); }
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 3px;
+            margin: 15px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #9b59b6, #8e44ad);
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 3px;
+        }
+        .winner-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .winner-content {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            color: #1a1a2e;
+            animation: winner-entrance 0.8s ease-out;
+            max-width: 90vw;
+        }
+        @keyframes winner-entrance {
+            0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.1) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" onclick="goHome()">← 홈</button>
+            <h1>🪜 랜덤 사다리 게임</h1>
+            <p>플레이어를 설정하고 시작 버튼을 눌러 자동 게임을 즐기세요!</p>
+        </div>
+        
+        <div class="setup-panel" id="setupPanel">
+            <div class="input-group">
+                <input type="text" id="playerName" placeholder="플레이어 이름 입력" maxlength="15">
+                <button class="btn btn-primary" onclick="addPlayer()">추가</button>
+            </div>
+            
+            <div class="players-grid" id="playersGrid"></div>
+            
+            <div class="preview-area">
+                <h3 style="text-align: center; margin-bottom: 20px; color: #9b59b6;">🪜 사다리 미리보기</h3>
+                <div class="preview-ladder" id="previewLadder"></div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-success" onclick="startGame()">🚀 시작</button>
+                <button class="btn btn-danger" onclick="resetGame()">🔄 리셋</button>
+            </div>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div class="ladder-container" id="ladderContainer"></div>
+            <div class="result-area" id="resultArea"></div>
+            <div class="controls">
+                <button class="btn btn-primary" onclick="backToSetup()">새 게임</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="winner-popup" id="winnerPopup">
+        <div class="winner-content">
+            <h1 style="font-size: 4em; margin-bottom: 20px;">🎉</h1>
+            <h2 id="winnerText" style="margin-bottom: 20px; font-size: 2.5em;"></h2>
+            <div id="winnerDetails" style="font-size: 1.5em; margin-bottom: 30px;"></div>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-success" onclick="showResult()" style="font-size: 18px; padding: 15px 30px;">결과 보기</button>
+                <button class="btn btn-primary" onclick="backToSetup()" style="font-size: 18px; padding: 15px 30px;">새 게임</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPlayers = [];
+        let gameInterval = null;
+        let gameProgress = 0;
+        
+        window.onload = function() {
+            loadPlayers();
+        };
+        
+        function goHome() {
+            window.location.href = '/';
+        }
+        
+        function loadPlayers() {
+            fetch('/api/ladder/players')
+            .then(response => response.json())
+            .then(data => {
+                currentPlayers = data;
+                displayPlayers();
+            })
+            .catch(error => {
+                console.error('플레이어 로드 실패:', error);
+            });
+        }
+        
+        function displayPlayers() {
+            const grid = document.getElementById('playersGrid');
+            grid.innerHTML = currentPlayers.map((player, index) => 
+                `<div class="player-card">
+                    <div class="player-color" style="background: ${player.color};"></div>
+                    <input type="text" value="${player.name}" onchange="updatePlayerName(${index}, this.value)" placeholder="플레이어 이름">
+                    ${currentPlayers.length > 2 ? `<button class="remove-btn" onclick="removePlayer(${index})">×</button>` : ''}
+                </div>`
+            ).join('');
+            updatePreview();
+        }
+        
+        function updatePreview() {
+            const preview = document.getElementById('previewLadder');
+            if (currentPlayers.length < 2) {
+                preview.innerHTML = '<div style="text-align: center; padding: 50px; color: rgba(255,255,255,0.5);">최소 2명의 플레이어가 필요합니다</div>';
+                return;
+            }
+            
+            preview.innerHTML = '';
+            const containerWidth = preview.offsetWidth || 300;
+            const maxPlayers = Math.min(currentPlayers.length, 8); // 미리보기에서 최대 8명만 표시
+            const laneSpacing = containerWidth / (maxPlayers + 1);
+            
+            fetch('/api/ladder/preview_results')
+            .then(response => response.json())
+            .then(data => {
+                currentPlayers.slice(0, maxPlayers).forEach((player, index) => {
+                    const lane = document.createElement('div');
+                    lane.className = 'preview-lane';
+                    lane.style.left = ((index + 1) * laneSpacing) + 'px';
+                    preview.appendChild(lane);
+                    
+                    const marker = document.createElement('div');
+                    marker.className = 'preview-player';
+                    marker.style.background = player.color;
+                    marker.style.left = ((index + 1) * laneSpacing - 15) + 'px';
+                    marker.textContent = player.name.charAt(0);
+                    preview.appendChild(marker);
+                    
+                    const result = document.createElement('div');
+                    result.className = `preview-result ${data.results[index] === '당첨' ? 'preview-winner' : 'preview-pass'}`;
+                    result.style.left = ((index + 1) * laneSpacing) + 'px';
+                    result.textContent = result.className.includes('winner') ? '🎉 당첨' : '통과';
+                    preview.appendChild(result);
+                });
+                
+                if (currentPlayers.length > maxPlayers) {
+                    const moreText = document.createElement('div');
+                    moreText.style.position = 'absolute';
+                    moreText.style.bottom = '10px';
+                    moreText.style.right = '10px';
+                    moreText.style.color = 'rgba(255,255,255,0.7)';
+                    moreText.style.fontSize = '12px';
+                    moreText.textContent = `+${currentPlayers.length - maxPlayers}명 더`;
+                    preview.appendChild(moreText);
+                }
+            })
+            .catch(error => {
+                console.error('미리보기 결과 로드 실패:', error);
+            });
+        }
+        
+        function addPlayer() {
+            const input = document.getElementById('playerName');
+            const name = input.value.trim();
+            
+            if (!name) {
+                alert('플레이어 이름을 입력하세요!');
+                return;
+            }
+            
+            if (currentPlayers.length >= 10) {
+                alert('최대 10명까지만 추가할 수 있습니다!');
+                return;
+            }
+            
+            fetch('/api/ladder/add_player', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    loadPlayers();
+                } else {
+                    alert(data.message || '플레이어 추가에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('플레이어 추가 오류:', error);
+                alert('플레이어 추가에 실패했습니다.');
+            });
+        }
+        
+        function updatePlayerName(index, name) {
+            if (!name.trim()) return;
+            
+            fetch('/api/ladder/update_player', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({index: index, name: name.trim()})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) loadPlayers();
+            });
+        }
+        
+        function removePlayer(index) {
+            fetch('/api/ladder/remove_player', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({index: index})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) loadPlayers();
+            });
+        }
+        
+        function resetGame() {
+            fetch('/api/ladder/reset', {method: 'POST'})
+            .then(() => loadPlayers());
+        }
+        
+        function startGame() {
+            if (currentPlayers.length < 2) {
+                alert('최소 2명의 플레이어가 필요합니다!');
+                return;
+            }
+            
+            fetch('/api/ladder/start_game', {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('setupPanel').style.display = 'none';
+                    document.getElementById('gameArea').style.display = 'block';
+                    setupLadder(data.ladder_connections, data.results);
+                    startGameLoop(data.results);
+                }
+            });
+        }
+        
+        function setupLadder(connections, results) {
+            const container = document.getElementById('ladderContainer');
+            const resultArea = document.getElementById('resultArea');
+            container.innerHTML = '';
+            resultArea.innerHTML = '';
+            
+            const playerCount = currentPlayers.length;
+            const containerWidth = container.offsetWidth || 800;
+            const minSpacing = 60; // 최소 간격
+            const maxSpacing = containerWidth / (playerCount + 1);
+            const laneSpacing = Math.max(minSpacing, maxSpacing);
+            
+            for (let i = 0; i < playerCount; i++) {
+                const lane = document.createElement('div');
+                lane.className = 'lane';
+                lane.style.left = ((i + 1) * laneSpacing) + 'px';
+                container.appendChild(lane);
+            }
+            
+            connections.forEach((levelObstacles, level) => {
+                levelObstacles.forEach(obstacle => {
+                    const obstacleEl = document.createElement('div');
+                    obstacleEl.className = `obstacle obstacle-${obstacle.type}`;
+                    const containerHeight = container.offsetHeight;
+                    
+                    obstacleEl.style.left = ((obstacle.lane + 1) * laneSpacing - 15) + 'px';
+                    obstacleEl.style.top = ((level / 90) * (containerHeight - 100) + 50) + 'px';
+                    
+                    if (obstacle.type === 'spinner') {
+                        obstacleEl.textContent = '🌀';
+                        obstacleEl.title = '뛱뛱이';
+                    } else if (obstacle.type === 'rocket') {
+                        obstacleEl.textContent = '🚀';
+                        obstacleEl.title = '로켓 부스터';
+                    } else if (obstacle.type === 'lightning') {
+                        obstacleEl.textContent = '⚡';
+                        obstacleEl.title = '번개 스피드';
+                    } else if (obstacle.type === 'tornado') {
+                        obstacleEl.textContent = '🌪️';
+                        obstacleEl.title = '토네이도';
+                    } else if (obstacle.type === 'freeze') {
+                        obstacleEl.textContent = '❄️';
+                        obstacleEl.title = '빙결 트랩';
+                    }
+                    
+                    container.appendChild(obstacleEl);
+                });
+            });
+            
+            currentPlayers.forEach((player, index) => {
+                const marker = document.createElement('div');
+                marker.className = 'player-marker';
+                marker.id = `player-${index}`;
+                marker.style.background = player.color;
+                marker.style.left = ((index + 1) * laneSpacing - 20) + 'px';
+                marker.style.top = '10px';
+                
+                // 플레이어 수에 따른 표시 조정
+                if (playerCount > 8) {
+                    marker.textContent = player.name.charAt(0);
+                    marker.style.fontSize = '12px';
+                } else if (playerCount > 6) {
+                    marker.textContent = player.name.substring(0, 2);
+                    marker.style.fontSize = '13px';
+                } else {
+                    marker.textContent = player.name.charAt(0);
+                    marker.style.fontSize = '16px';
+                }
+                
+                const nameTag = document.createElement('div');
+                nameTag.className = 'player-name-tag';
+                nameTag.textContent = playerCount > 8 ? player.name.substring(0, 4) : player.name;
+                nameTag.style.color = player.color;
+                nameTag.style.fontSize = playerCount > 8 ? '8px' : '10px';
+                marker.appendChild(nameTag);
+                
+                container.appendChild(marker);
+            });
+            
+            updateResultArea(results);
+        }
+        
+        function updateResultArea(results) {
+            const resultArea = document.getElementById('resultArea');
+            resultArea.innerHTML = '';
+            
+            document.documentElement.style.setProperty('--total-players', results.length);
+            
+            const isMobile = window.innerWidth <= 768;
+            const isSmallMobile = window.innerWidth <= 480;
+            
+            results.forEach((result, index) => {
+                const resultBox = document.createElement('div');
+                resultBox.className = result === '당첨' ? 'result-box result-winner' : 'result-box result-pass';
+                
+                if (isSmallMobile && results.length > 8) {
+                    resultBox.textContent = result === '당첨' ? '🎉' : '✓';
+                } else if (isMobile && results.length > 6) {
+                    resultBox.textContent = result === '당첨' ? '🎉당' : '통';
+                } else if (isMobile && results.length > 4) {
+                    resultBox.textContent = result === '당첨' ? '🎉당첨' : '통과';
+                } else {
+                    resultBox.textContent = result === '당첨' ? '🎉 당첨!' : '통과';
+                }
+                
+                resultArea.appendChild(resultBox);
+            });
+        }
+        
+        function startGameLoop(currentResults) {
+            gameProgress = 0;
+            gameInterval = setInterval(() => {
+                fetch('/api/ladder/game_status')
+                .then(response => response.json())
+                .then(data => {
+                    if (!data.running) {
+                        clearInterval(gameInterval);
+                        showWinner(data.winner);
+                        return;
+                    }
+                    
+                    if (JSON.stringify(currentResults) !== JSON.stringify(data.results)) {
+                        currentResults = data.results;
+                        updateResultArea(data.results);
+                    }
+                    
+                    updateGame(data.players);
+                    gameProgress = Math.min((data.players[0].position / 100) * 100, 100);
+                    document.getElementById('progressFill').style.width = gameProgress + '%';
+                });
+            }, 200);
+        }
+        
+        function updateGame(players) {
+            const container = document.getElementById('ladderContainer');
+            const containerWidth = container.offsetWidth || 800;
+            const minSpacing = 60;
+            const maxSpacing = containerWidth / (players.length + 1);
+            const laneSpacing = Math.max(minSpacing, maxSpacing);
+            
+            players.forEach((player, index) => {
+                const marker = document.getElementById(`player-${index}`);
+                if (marker) {
+                    const progress = player.position / 100;
+                    const containerHeight = container.offsetHeight;
+                    
+                    marker.style.left = ((player.lane + 1) * laneSpacing - 20) + 'px';
+                    marker.style.top = (10 + progress * (containerHeight - 50)) + 'px';
+                    
+                    marker.classList.remove('effect-spinner', 'effect-rocket', 'effect-lightning', 'effect-tornado', 'effect-freeze');
+                    
+                    if (player.spinner_effect > 0) {
+                        marker.classList.add('effect-spinner');
+                    } else if (player.rocket_effect > 0) {
+                        marker.classList.add('effect-rocket');
+                    } else if (player.lightning_effect > 0) {
+                        marker.classList.add('effect-lightning');
+                    } else if (player.tornado_effect > 0) {
+                        marker.classList.add('effect-tornado');
+                    } else if (player.freeze_effect > 0) {
+                        marker.classList.add('effect-freeze');
+                    }
+                }
+            });
+        }
+        
+        let gameEnded = false;
+        
+        function showWinner(winner) {
+            if (!gameEnded) {
+                document.getElementById('winnerText').textContent = `${winner.name} 당첨!`;
+                document.getElementById('winnerDetails').textContent = '🎉 축하합니다! 🎉';
+                document.getElementById('winnerPopup').style.display = 'flex';
+                gameEnded = true;
+            }
+        }
+        
+        function showResult() {
+            document.getElementById('winnerPopup').style.display = 'none';
+        }
+        
+        function backToSetup() {
+            document.getElementById('setupPanel').style.display = 'block';
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('winnerPopup').style.display = 'none';
+            gameEnded = false;
+            if (gameInterval) {
+                clearInterval(gameInterval);
+                gameInterval = null;
+            }
+            fetch('/api/ladder/reset', {method: 'POST'})
+            .then(() => loadPlayers());
+        }
+        
+        document.getElementById('playerName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addPlayer();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🏇 랜덤 경마 게임</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: Arial, sans-serif; 
+            background: linear-gradient(135deg, #0c0c0c, #1a1a1a, #2d2d30);
+            color: #e0e0e0; 
+            min-height: 100vh;
+            padding: 10px;
+            overflow-x: hidden;
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        .header { text-align: center; margin-bottom: 20px; position: relative; }
+        .header h1 { font-size: clamp(2em, 8vw, 3em); margin-bottom: 10px; color: #ff6b6b; }
+        .back-btn {
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: #ff6b6b;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+            .header { margin-bottom: 15px; }
+            .input-group { gap: 8px; max-width: 100%; margin: 0 0 15px 0; }
+            .input-group input { font-size: 14px; padding: 8px; }
+            .btn { padding: 8px 15px; font-size: 14px; white-space: nowrap; }
+            .players-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+        }
+        @media (max-width: 360px) {
+            .players-grid { grid-template-columns: 1fr; gap: 8px; }
+            .player-card { padding: 10px; gap: 8px; }
+            .race-track { height: 300px; }
+            .container { padding: 5px; }
+            .setup-panel { padding: 15px; }
+            .game-area { padding: 10px; min-height: 95vh; }
+            .header h1 { font-size: 1.8em; }
+            .horse { width: 30px; height: 20px; font-size: 16px; }
+            .lane { height: 35px; }
+            .mode-buttons { flex-direction: column; }
+        }
+        @media (max-width: 480px) {
+            .input-group { gap: 5px; flex-direction: column; }
+            .input-group input { font-size: 13px; padding: 8px; }
+            .btn { padding: 8px 12px; font-size: 13px; width: 100%; }
+            .race-track { height: 250px; }
+            .game-area { padding: 5px; }
+            .header h1 { font-size: 1.4em; }
+            .setup-panel { padding: 10px; }
+            .horse { width: 25px; height: 18px; font-size: 14px; }
+            .lane { height: 30px; }
+            .race-status { font-size: 1.2em; }
+            .players-grid { grid-template-columns: repeat(2, 1fr); gap: 5px; }
+        }
+        @media (max-width: 360px) {
+            .players-grid { grid-template-columns: 1fr; gap: 8px; }
+        }
+        
+        .setup-panel {
+            background: rgba(0,0,0,0.4);
+            padding: 30px;
+            border-radius: 20px;
+            margin-bottom: 20px;
+        }
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            max-width: 500px;
+            margin: 0 auto 20px auto;
+            flex-wrap: nowrap;
+        }
+        .input-group input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ff6b6b;
+            border-radius: 10px;
+            background: rgba(30,30,30,0.9);
+            font-size: 16px;
+            color: #e0e0e0;
+            min-width: 0;
+        }
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .btn-primary { background: #ff6b6b; color: white; }
+        .btn-success { background: #2ecc71; color: #1a1a2e; }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-info { background: #4ecdc4; color: #1a1a2e; }
+        
+        .mode-selection {
+            text-align: center;
+            margin: 20px 0;
+        }
+        .mode-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+        .mode-btn {
+            padding: 10px 20px;
+            border: 2px solid #ff6b6b;
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .mode-btn.active {
+            background: #ff6b6b;
+            color: white;
+        }
+        
+        .players-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin: 20px auto;
+            max-width: 1000px;
+        }
+        @media (max-width: 900px) {
+            .players-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 600px) {
+            .players-grid { grid-template-columns: 1fr; }
+        }
+        .player-card {
+            background: rgba(0,0,0,0.3);
+            padding: 15px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .player-color {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 3px solid rgba(255,255,255,0.9);
+            flex-shrink: 0;
+        }
+        .player-card input {
+            flex: 1;
+            background: rgba(20,20,20,0.8);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 8px;
+            padding: 8px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        .remove-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid #e74c3c;
+            border-radius: 50%;
+            background: #e74c3c;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .controls {
+            text-align: center;
+            margin: 20px auto 0 auto;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        .game-area {
+            background: rgba(0,0,0,0.5);
+            border-radius: 20px;
+            padding: 20px;
+            min-height: 85vh;
+            display: none;
+            max-width: 100vw;
+            margin: 0 auto;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        .race-info {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .race-status {
+            font-size: 1.5em;
+            margin-bottom: 10px;
+            color: #ff6b6b;
+        }
+        .countdown {
+            font-size: 3em;
+            font-weight: bold;
+            color: #e74c3c;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            animation: countdown-bounce 1s ease-in-out;
+        }
+        @keyframes countdown-bounce {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .race-track {
+            background: linear-gradient(90deg, #1a1a1a 0%, #2d2d30 50%, #1a1a1a 100%);
+            border: 4px solid #444;
+            border-radius: 15px;
+            height: 400px;
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        
+        .finish-line {
+            position: absolute;
+            right: 10px;
+            top: 0;
+            bottom: 0;
+            width: 6px;
+            background: repeating-linear-gradient(
+                0deg,
+                #fff 0px,
+                #fff 10px,
+                #000 10px,
+                #000 20px
+            );
+            z-index: 5;
+        }
+        
+        .lane {
+            height: 40px;
+            border-bottom: 2px dashed rgba(255,255,255,0.3);
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .lane:last-child {
+            border-bottom: none;
+        }
+        
+        .horse {
+            position: absolute;
+            left: 10px;
+            width: 40px;
+            height: 25px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+            transition: left 0.1s ease-out;
+            z-index: 3;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+        }
+        
+        .horse.running {
+            animation: horse-gallop 0.4s ease-in-out infinite;
+        }
+        @keyframes horse-gallop {
+            0% { transform: translateY(0px) scaleX(1) rotate(0deg); }
+            25% { transform: translateY(-3px) scaleX(1.05) rotate(-1deg); }
+            50% { transform: translateY(-1px) scaleX(1.1) rotate(0deg); }
+            75% { transform: translateY(-3px) scaleX(1.05) rotate(1deg); }
+            100% { transform: translateY(0px) scaleX(1) rotate(0deg); }
+        }
+        
+        .horse.fast {
+            animation: horse-sprint 0.25s ease-in-out infinite;
+        }
+        @keyframes horse-sprint {
+            0% { transform: translateY(0px) scaleX(1) skewX(0deg); }
+            25% { transform: translateY(-4px) scaleX(1.15) skewX(-2deg); }
+            50% { transform: translateY(-2px) scaleX(1.2) skewX(0deg); }
+            75% { transform: translateY(-4px) scaleX(1.15) skewX(2deg); }
+            100% { transform: translateY(0px) scaleX(1) skewX(0deg); }
+        }
+        
+        .horse.winner {
+            animation: winner-celebration 1s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        }
+        @keyframes winner-celebration {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            25% { transform: scale(1.1) rotate(-2deg); }
+            75% { transform: scale(1.1) rotate(2deg); }
+        }
+        
+        .lane-number {
+            position: absolute;
+            left: -30px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(0,0,0,0.7);
+            color: white;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
+        .leaderboard {
+            background: rgba(0,0,0,0.3);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .leaderboard h3 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #ff6b6b;
+        }
+        .ranking-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+        .ranking-item {
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid transparent;
+        }
+        .ranking-item.first { border-color: #FFD700; background: rgba(255, 215, 0, 0.1); }
+        .ranking-item.second { border-color: #C0C0C0; background: rgba(192, 192, 192, 0.1); }
+        .ranking-item.third { border-color: #CD7F32; background: rgba(205, 127, 50, 0.1); }
+        
+        .winner-popup {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+        .winner-content {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            color: #1a1a2e;
+            animation: winner-entrance 0.8s ease-out;
+            max-width: 90vw;
+        }
+        .loser-content {
+            background: linear-gradient(135deg, #7f8c8d, #95a5a6);
+            padding: 50px;
+            border-radius: 25px;
+            text-align: center;
+            color: #2c3e50;
+            animation: loser-entrance 0.8s ease-out;
+            max-width: 90vw;
+        }
+        @keyframes winner-entrance {
+            0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.1) rotate(5deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+        @keyframes loser-entrance {
+            0% { transform: scale(0.3) translateY(50px); opacity: 0; }
+            50% { transform: scale(1.05) translateY(-10px); }
+            100% { transform: scale(1) translateY(0px); opacity: 1; }
+        }
+        
+        .race-effects {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .dust-cloud {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            animation: dust-fade 0.8s ease-out forwards;
+        }
+        @keyframes dust-fade {
+            0% { opacity: 0.8; transform: scale(0.3) translateX(0px); }
+            100% { opacity: 0; transform: scale(1.5) translateX(-20px); }
+        }
+        
+        .speed-indicator {
+            position: absolute;
+            right: 50px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" onclick="goHome()">← 홈</button>
+            <h1>🏇 랜덤 경마 게임</h1>
+            <p>말들을 설정하고 박진감 넘치는 레이스를 즐기세요!</p>
+        </div>
+        
+        <div class="setup-panel" id="setupPanel">
+            <div class="mode-selection">
+                <h3>게임 모드 선택</h3>
+                <div class="mode-buttons">
+                    <div class="mode-btn active" onclick="setMode('first')" id="firstMode">
+                        🥇 1등 선정 (가장 먼저 도착)
+                    </div>
+                    <div class="mode-btn" onclick="setMode('last')" id="lastMode">
+                        🐌 꼴등 선정 (가장 늦게 도착)
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <input type="text" id="playerName" placeholder="말 이름 입력" maxlength="10">
+                <button class="btn btn-primary" onclick="addPlayer()">추가</button>
+            </div>
+            
+            <div class="players-grid" id="playersGrid"></div>
+            
+            <div class="controls">
+                <button class="btn btn-success" onclick="startGame()">🏁 레이스 시작</button>
+            </div>
+        </div>
+        
+        <div class="game-area" id="gameArea">
+            <div class="race-info">
+                <div class="race-status" id="raceStatus">레이스 준비 중...</div>
+            </div>
+            
+            <div class="race-track" id="raceTrack">
+                <div class="finish-line"></div>
+                <div class="race-effects" id="raceEffects"></div>
+            </div>
+            
+            <div class="leaderboard">
+                <h3>🏆 실시간 순위</h3>
+                <div class="ranking-list" id="rankingList"></div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn btn-primary" onclick="backToSetup()">새 레이스</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="winner-popup" id="winnerPopup">
+        <div id="popupContent">
+            <h1 id="popupIcon" style="font-size: 4em; margin-bottom: 20px;">🏆</h1>
+            <h2 id="winnerText" style="margin-bottom: 20px; font-size: 2.5em;"></h2>
+            <div id="winnerDetails" style="font-size: 1.5em; margin-bottom: 30px;"></div>
+            <div style="display: flex; gap: 15px; justify-content: center; flex-wrap: wrap;">
+                <button class="btn btn-success" onclick="showResult()" style="font-size: 18px; padding: 15px 30px;">결과 보기</button>
+                <button class="btn btn-primary" onclick="backToSetup()" style="font-size: 18px; padding: 15px 30px;">새 레이스</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentPlayers = [];
+        let gameInterval = null;
+        let currentMode = 'first';
+        
+        window.onload = function() {
+            loadPlayers();
+        };
+        
+        function goHome() {
+            window.location.href = '/';
+        }
+        
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById('firstMode').classList.toggle('active', mode === 'first');
+            document.getElementById('lastMode').classList.toggle('active', mode === 'last');
+            
+            fetch('/api/horse/set_mode', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({mode: mode})
+            });
+        }
+        
+        function loadPlayers() {
+            fetch('/api/horse/players')
+            .then(response => response.json())
+            .then(data => {
+                currentPlayers = data;
+                displayPlayers();
+            })
+            .catch(error => {
+                console.error('플레이어 로드 실패:', error);
+            });
+        }
+        
+        function displayPlayers() {
+            const grid = document.getElementById('playersGrid');
+            grid.innerHTML = currentPlayers.map((player, index) => 
+                `<div class="player-card">
+                    <div class="player-color" style="background: ${player.color};"></div>
+                    <input type="text" value="${player.name}" onchange="updatePlayerName(${index}, this.value)" placeholder="말 이름">
+                    ${currentPlayers.length > 2 ? `<button class="remove-btn" onclick="removePlayer(${index})">×</button>` : ''}
+                </div>`
+            ).join('');
+        }
+        
+        function addPlayer() {
+            const input = document.getElementById('playerName');
+            const name = input.value.trim();
+            
+            if (!name) {
+                alert('말 이름을 입력하세요!');
+                return;
+            }
+            
+            if (currentPlayers.length >= 10) {
+                alert('최대 10마리까지만 추가할 수 있습니다!');
+                return;
+            }
+            
+            fetch('/api/horse/add_player', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: name})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    input.value = '';
+                    loadPlayers();
+                } else {
+                    alert(data.message || '플레이어 추가에 실패했습니다.');
+                }
+            })
+            .catch(error => {
+                console.error('플레이어 추가 오류:', error);
+                alert('플레이어 추가에 실패했습니다.');
+            });
+        }
+        
+        function updatePlayerName(index, name) {
+            if (!name.trim()) return;
+            
+            fetch('/api/horse/update_player', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({index: index, name: name.trim()})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) loadPlayers();
+            });
+        }
+        
+        function removePlayer(index) {
+            fetch('/api/horse/remove_player', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({index: index})
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) loadPlayers();
+            });
+        }
+        
+        function resetGame() {
+            fetch('/api/horse/reset', {method: 'POST'})
+            .then(() => loadPlayers());
+        }
+        
+        function startGame() {
+            if (currentPlayers.length < 2) {
+                alert('최소 2마리가 필요합니다!');
+                return;
+            }
+            
+            fetch('/api/horse/start_game', {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('setupPanel').style.display = 'none';
+                    document.getElementById('gameArea').style.display = 'block';
+                    setupRaceTrack();
+                    startRaceLoop();
+                }
+            });
+        }
+        
+        function setupRaceTrack() {
+            const track = document.getElementById('raceTrack');
+            const existingLanes = track.querySelectorAll('.lane');
+            existingLanes.forEach(lane => lane.remove());
+            
+            currentPlayers.forEach((player, index) => {
+                const lane = document.createElement('div');
+                lane.className = 'lane';
+                lane.innerHTML = `
+                    <div class="lane-number">${index + 1}</div>
+                    <div class="horse" id="horse-${index}" style="background: ${player.color};">
+                        🐎
+                    </div>
+                    <div class="speed-indicator" id="speed-${index}">0.0</div>
+                `;
+                track.appendChild(lane);
+            });
+        }
+        
+        function startRaceLoop() {
+            showCountdown(() => {
+                gameInterval = setInterval(() => {
+                    fetch('/api/horse/game_status')
+                    .then(response => response.json())
+                    .then(data => {
+                        updateRaceDisplay(data);
+                        
+                        if (data.game_finished) {
+                            clearInterval(gameInterval);
+                            setTimeout(() => {
+                                showWinner(data.winner, data.game_mode);
+                            }, 1500);
+                        }
+                    });
+                }, 100);
+            });
+        }
+        
+        function showCountdown(callback) {
+            const status = document.getElementById('raceStatus');
+            let count = 3;
+            
+            const countdownInterval = setInterval(() => {
+                if (count > 0) {
+                    status.innerHTML = `<div class="countdown">${count}</div>`;
+                    count--;
+                } else {
+                    status.innerHTML = `<div class="countdown">START!</div>`;
+                    clearInterval(countdownInterval);
+                    setTimeout(() => {
+                        callback();
+                    }, 500);
+                }
+            }, 800);
+        }
+        
+        function updateRaceDisplay(data) {
+            const status = document.getElementById('raceStatus');
+            
+            if (data.race_started && !data.game_finished) {
+                status.textContent = `🏁 레이스 진행 중... (${data.race_time.toFixed(1)}초)`;
+                
+                // 말 위치 업데이트
+                data.players.forEach((player, index) => {
+                    const horse = document.getElementById(`horse-${index}`);
+                    const speedIndicator = document.getElementById(`speed-${index}`);
+                    
+                    if (horse && speedIndicator) {
+                        const trackWidth = document.getElementById('raceTrack').offsetWidth - 80;
+                        const position = Math.min((player.position / 100) * trackWidth, trackWidth - 20);
+                        horse.style.left = `${position + 10}px`;
+                        speedIndicator.textContent = player.speed.toFixed(1);
+                        
+                        // 속도에 따른 애니메이션 변경
+                        horse.classList.remove('running', 'fast');
+                        if (player.speed > 2.0) {
+                            horse.classList.add('fast');
+                        } else if (player.speed > 0.5) {
+                            horse.classList.add('running');
+                        }
+                        
+                        // 먼지 효과
+                        if (Math.random() < 0.4 && player.speed > 1.0) {
+                            createDustEffect(position + 10, (index * 40) + 20);
+                        }
+                    }
+                });
+                
+                // 실시간 순위 업데이트
+                updateRanking(data.players);
+                
+            } else if (data.game_finished) {
+                const modeText = data.game_mode === 'first' ? '1등' : '꼴등';
+                status.innerHTML = `<div style="color: #FFD700; font-size: 1.5em;">🏆 ${data.winner.name} ${modeText} 달성! 🏆</div>`;
+                
+                // 승리한 말 강조
+                const winnerHorse = document.getElementById(`horse-${data.winner_index}`);
+                if (winnerHorse) {
+                    winnerHorse.classList.remove('running');
+                    winnerHorse.classList.add('winner');
+                }
+            }
+        }
+        
+        function createDustEffect(x, y) {
+            const effects = document.getElementById('raceEffects');
+            const dust = document.createElement('div');
+            dust.className = 'dust-cloud';
+            dust.style.left = `${x - 10}px`;
+            dust.style.top = `${y}px`;
+            effects.appendChild(dust);
+            
+            setTimeout(() => {
+                if (dust.parentNode) {
+                    dust.parentNode.removeChild(dust);
+                }
+            }, 1000);
+        }
+        
+        function updateRanking(players) {
+            const rankingList = document.getElementById('rankingList');
+            const sortedPlayers = [...players].sort((a, b) => b.position - a.position);
+            
+            rankingList.innerHTML = sortedPlayers.map((player, index) => {
+                let rankClass = '';
+                if (index === 0) rankClass = 'first';
+                else if (index === 1) rankClass = 'second';
+                else if (index === 2) rankClass = 'third';
+                
+                return `<div class="ranking-item ${rankClass}">
+                    <div style="color: ${player.color}; font-weight: bold;">${index + 1}위</div>
+                    <div>${player.name}</div>
+                    <div style="font-size: 0.9em; opacity: 0.8;">${player.position.toFixed(1)}%</div>
+                </div>`;
+            }).join('');
+        }
+        
+        function showWinner(winner, mode) {
+            const popupContent = document.getElementById('popupContent');
+            const popupIcon = document.getElementById('popupIcon');
+            const winnerText = document.getElementById('winnerText');
+            const winnerDetails = document.getElementById('winnerDetails');
+            
+            if (mode === 'first') {
+                popupContent.className = 'winner-content';
+                popupIcon.textContent = '🏆';
+                winnerText.textContent = `${winner.name} 승리!`;
+                winnerDetails.textContent = '🏆 1등으로 결승선을 통과했습니다!';
+            } else {
+                popupContent.className = 'loser-content';
+                popupIcon.textContent = '😭';
+                winnerText.textContent = `${winner.name} 꼴등...`;
+                winnerDetails.textContent = '🐌 가장 늦게 도착하여 꼴등이 되었습니다...';
+            }
+            
+            document.getElementById('winnerPopup').style.display = 'flex';
+        }
+        
+        function showResult() {
+            document.getElementById('winnerPopup').style.display = 'none';
+        }
+        
+        function backToSetup() {
+            document.getElementById('setupPanel').style.display = 'block';
+            document.getElementById('gameArea').style.display = 'none';
+            document.getElementById('winnerPopup').style.display = 'none';
+            if (gameInterval) {
+                clearInterval(gameInterval);
+                gameInterval = null;
+            }
+            
+            // 게임 데이터 완전 초기화
+            fetch('/api/horse/reset', {method: 'POST'})
+            .then(() => {
+                loadPlayers();
+                // UI 상태도 초기화
+                document.getElementById('raceStatus').textContent = '레이스 준비 중...';
+                const rankingList = document.getElementById('rankingList');
+                if (rankingList) rankingList.innerHTML = '';
+            });
+        }
+        
+        document.getElementById('playerName').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                addPlayer();
+            }
+        });
+    </script>
+</body>
+</html>
