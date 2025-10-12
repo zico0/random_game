@@ -128,6 +128,11 @@ def get_game_session(game_type='dice'):
     session_id = get_session_id()
     return init_game_session(session_id, game_type)
 
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    from flask import send_from_directory
+    return send_from_directory('static', filename)
+
 @app.route('/')
 def index():
     return '''<!DOCTYPE html>

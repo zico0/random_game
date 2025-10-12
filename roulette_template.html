@@ -28,10 +28,47 @@
             cursor: pointer;
             font-weight: bold;
         }
+        .sponsor-box {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+            font-size: 13px;
+            max-width: 240px;
+            z-index: 1000;
+            border: 2px solid #fff;
+            text-align: center;
+        }
+        .sponsor-box a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .sponsor-mobile {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            display: none;
+        }
+        .sponsor-mobile a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: bold;
+        }
 
         @media (max-width: 768px) {
             .header { margin-bottom: 15px; }
-
+            .sponsor-box { display: none; }
+            .sponsor-mobile { display: block; }
             .input-group { gap: 8px; max-width: 100%; margin: 0 0 15px 0; }
             .input-group input { font-size: 14px; padding: 8px; }
             .btn { padding: 8px 15px; font-size: 14px; white-space: nowrap; }
@@ -325,10 +362,20 @@
 </head>
 <body>
     <div class="container">
+        <div class="sponsor-box">
+            ☕ 개발자에게 커피 한잔 후원하기<br>
+            <img src="/static/kakaopay.png" alt="카카오페이 QR" style="width: 120px; height: auto; margin-top: 10px; border-radius: 8px; display: block; margin-left: auto; margin-right: auto;">
+        </div>
+        
         <div class="header">
             <button class="back-btn" onclick="goHome()">← 홈</button>
             <h1>🎡 랜덤 룰렛 게임</h1>
             <p>플레이어를 설정하고 시작 버튼을 눌러 룰렛을 돌리세요!</p>
+        </div>
+        
+        <div class="sponsor-mobile">
+            ☕ 개발자에게 커피 한잔 후원하기<br>
+            <a href="https://qr.kakaopay.com/FLQYOTPkh5dc02170" target="_blank">https://qr.kakaopay.com/FLQYOTPkh5dc02170</a>
         </div>
         
         <div class="setup-panel" id="setupPanel">
@@ -341,7 +388,6 @@
             
             <div class="controls">
                 <button class="btn btn-success" onclick="startGame()">🎡 시작</button>
-                <button class="btn btn-danger" onclick="resetGame()">🔄 리셋</button>
             </div>
         </div>
         
