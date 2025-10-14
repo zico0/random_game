@@ -7,7 +7,7 @@ from collections import defaultdict
 import gc
 from threading import Lock
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static', static_url_path='/static')
 app.secret_key = 'random_games_secret_key_2024'
 
 game_sessions = {}
@@ -223,14 +223,18 @@ def index():
             line-height: 1.5;
         }
         @media (max-width: 768px) {
-            .game-selection { grid-template-columns: 1fr; gap: 20px; }
-            .game-card { padding: 30px 20px; }
-            .game-icon { font-size: 3em; }
-            .game-title { font-size: 1.5em; }
-            .game-description { font-size: 1em; }
+            .game-selection { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            .game-card { padding: 20px 15px; }
+            .game-icon { font-size: 2.5em; }
+            .game-title { font-size: 1.2em; }
+            .game-description { font-size: 0.9em; }
         }
-        @media (max-width: 900px) {
-            .game-selection { grid-template-columns: 1fr; gap: 20px; }
+        @media (max-width: 480px) {
+            .game-selection { gap: 10px; }
+            .game-card { padding: 15px 10px; }
+            .game-icon { font-size: 2em; }
+            .game-title { font-size: 1.1em; }
+            .game-description { font-size: 0.8em; line-height: 1.3; }
         }
     </style>
 </head>

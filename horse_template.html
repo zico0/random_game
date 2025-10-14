@@ -811,7 +811,12 @@
             }).join('');
         }
         
+        let winnerShown = false;
+        
         function showWinner(winner, mode) {
+            if (winnerShown) return;
+            winnerShown = true;
+            
             const popupContent = document.getElementById('popupContent');
             const popupIcon = document.getElementById('popupIcon');
             const winnerText = document.getElementById('winnerText');
@@ -840,6 +845,7 @@
             document.getElementById('setupPanel').style.display = 'block';
             document.getElementById('gameArea').style.display = 'none';
             document.getElementById('winnerPopup').style.display = 'none';
+            winnerShown = false;
             if (gameInterval) {
                 clearInterval(gameInterval);
                 gameInterval = null;

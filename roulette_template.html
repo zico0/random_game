@@ -698,7 +698,11 @@
             }
         }
         
+        let winnerShown = false;
+        
         function showWinner(winner) {
+            if (winnerShown) return;
+            winnerShown = true;
             document.getElementById('winnerText').textContent = `${winner.name} 당첨!`;
             document.getElementById('winnerDetails').textContent = '🎡 룰렛이 선택했습니다!';
             document.getElementById('winnerPopup').style.display = 'flex';
@@ -712,6 +716,7 @@
             document.getElementById('setupPanel').style.display = 'block';
             document.getElementById('gameArea').style.display = 'none';
             document.getElementById('winnerPopup').style.display = 'none';
+            winnerShown = false;
             if (gameInterval) {
                 clearInterval(gameInterval);
                 gameInterval = null;
