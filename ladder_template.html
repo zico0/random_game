@@ -123,7 +123,7 @@
             .preview-ladder { height: 120px; }
             .preview-player { width: 20px; height: 20px; font-size: 8px; }
             .result-area { padding: 4px 0; gap: 0; }
-            .result-box { font-size: 6px; padding: 2px 1px; min-width: 0; width: calc(100% / var(--total-players)); line-height: 1.2; flex-shrink: 1; }
+            .result-box { font-size: 8px !important; padding: 4px 1px !important; min-width: 0; width: calc(100% / var(--total-players)); line-height: 1.1; flex-shrink: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
             .ladder-container { height: 45vh; }
             .game-area { padding: 5px; }
             .header h1 { font-size: 1.4em; }
@@ -780,12 +780,14 @@
                 const resultBox = document.createElement('div');
                 resultBox.className = result === '당첨' ? 'result-box result-winner' : 'result-box result-pass';
                 
-                if (isSmallMobile && results.length > 8) {
+                if (isSmallMobile && results.length > 6) {
                     resultBox.textContent = result === '당첨' ? '🎉' : '✓';
+                } else if (isSmallMobile) {
+                    resultBox.textContent = result === '당첨' ? '당첨' : '통과';
                 } else if (isMobile && results.length > 6) {
                     resultBox.textContent = result === '당첨' ? '🎉당' : '통';
                 } else if (isMobile && results.length > 4) {
-                    resultBox.textContent = result === '당첨' ? '🎉당첨' : '통과';
+                    resultBox.textContent = result === '당첨' ? '당첨🎉' : '통과';
                 } else {
                     resultBox.textContent = result === '당첨' ? '🎉 당첨!' : '통과';
                 }
